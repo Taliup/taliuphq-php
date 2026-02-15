@@ -31,8 +31,8 @@ $response = $client->hostedPayments()->createCheckoutUrl([
     'last_name' => 'User',
     'email' => 'test@test.com',
     'reference' => 'ORDER-10029',
-    'redirect_url' => 'https://external.taliuphq.com',
-    'cancel_url' => 'https://external.taliuphq.com',
+    'redirect_url' => 'https://example.com/success',
+    'cancel_url' => 'https://example.com/cancel',
 ]);
 
 print_r($response);
