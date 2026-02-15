@@ -25,12 +25,14 @@ if ($baseUrl !== '') {
 $client = new Client($config);
 
 $response = $client->hostedPayments()->createCheckoutUrl([
-    'amount' => 10.00,
+    'amount' => 15.00,
     'currency' => 'CAD',
     'first_name' => 'Test',
     'last_name' => 'User',
-    'redirect_url' => 'https://example.com/success',
-    'cancel_url' => 'https://example.com/cancel',
+    'email' => 'test@test.com',
+    'reference' => 'ORDER-10029',
+    'redirect_url' => 'https://external.taliuphq.com',
+    'cancel_url' => 'https://external.taliuphq.com',
 ]);
 
 print_r($response);
