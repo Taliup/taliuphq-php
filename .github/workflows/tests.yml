@@ -1,0 +1,63 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        php-version: ['8.2', '8.3']
+    
+    name: PHP ${{ matrix.php-version }} Tests
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: mbstring, xml, ctype, json
+        coverage: xdebug
+    
+    - name: Validate composer.json
+      run: composer validate --strict
+    
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-${{ matrix.php-version }}-
+    
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+    
+    - name: Run unit tests
+      run: ./vendor/bin/phpunit --testsuite Unit
+    
+    - name: Run integration tests
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      env:
+        TALIUP_MERCHANT_SITE_ID: ${{ secrets.TALIUP_MERCHANT_SITE_ID }}
+        TALIUP_MERCHANT_SECRET_KEY: ${{ secrets.TALIUP_MERCHANT_SECRET_KEY }}
+        TALIUP_BASE_URL: ${{ secrets.TALIUP_BASE_URL }}
+      run: ./vendor/bin/phpunit --testsuite Integration
+    
+    - name: Generate coverage report
+      run: ./vendor/bin/phpunit --coverage-clover coverage.xml
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella

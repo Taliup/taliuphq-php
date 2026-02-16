@@ -59,6 +59,34 @@ $response = $client->hostedPayments()->verifyTransaction([
 
 The SDK throws `Taliup\Sdk\Exceptions\ApiException` for non-2xx responses.
 
+## Testing
+
+The SDK includes comprehensive unit and integration tests. To run the test suite:
+
+```bash
+# Install development dependencies
+composer install
+
+# Run all tests
+./vendor/bin/phpunit
+
+# Run only unit tests
+./vendor/bin/phpunit --testsuite Unit
+
+# Generate coverage report
+./vendor/bin/phpunit --coverage-html coverage
+```
+
+For integration tests, set the following environment variables:
+
+```bash
+export TALIUP_MERCHANT_SITE_ID="hpm_test_xxxxx"
+export TALIUP_MERCHANT_SECRET_KEY="hpsk_test_xxxxx"
+export TALIUP_BASE_URL="https://sandbox.taliuphq.com/api/v1"
+```
+
+See [tests/README.md](tests/README.md) for more details.
+
 ## API Reference
 
 Hosted Payments:

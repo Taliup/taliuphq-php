@@ -24,9 +24,10 @@ ehthumbs.db
 Thumbs.db
 
 # Testing
-/phpunit.xml
+/phpunit.xml.local
 /.phpunit.result.cache
 /coverage/
+/.phpunit.cache
 
 # Build
 /build/
