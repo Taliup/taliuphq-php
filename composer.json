@@ -1,8 +1,17 @@
 {
-  "name": "taliup/taliup-php",
-  "description": "Taliup PHP SDK",
+  "name": "taliup/taliuphq-php",
+  "description": "Official PHP SDK for the TaliupHQ API",
   "type": "library",
-  "license": "proprietary",
+  "license": "MIT",
+  "keywords": ["taliup", "payments", "hosted-payments", "payment-gateway"],
+  "homepage": "https://taliup.ca",
+  "authors": [
+    {
+      "name": "Taliup",
+      "email": "support@taliuphq.ca",
+      "homepage": "https://taliup.ca"
+    }
+  ],
   "require": {
     "php": "^8.2",
     "guzzlehttp/guzzle": "^7.8"

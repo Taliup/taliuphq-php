@@ -33,8 +33,9 @@ class Client
         }
 
         $this->http = new GuzzleClient([
-            'base_uri' => $this->baseUrl . '/',
-            'timeout' => $this->timeout,
+            'base_uri'    => $this->baseUrl . '/',
+            'timeout'     => $this->timeout,
+            'http_errors' => false, // Handle HTTP errors ourselves so we can extract body/status
         ]);
     }
 
