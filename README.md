@@ -1,11 +1,11 @@
-# Taliup PHP SDK
+# TaliupHQ PHP SDK
 
-Official PHP library for the TaliupHQ Hosted Payments API.
+Official PHP SDK for the TaliupHQ API.
 
 ## Install
 
 ```bash
-composer require taliup/taliup-php
+composer require taliup/taliuphq-php
 ```
 
 Requires PHP 8.2+.
