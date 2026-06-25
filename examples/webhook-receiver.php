@@ -34,23 +34,27 @@ try {
 
 // $event is the decoded JSON payload, e.g.:
 // [
-//   'event'        => 'payment.approved',
-//   'reference'    => 'ORDER-123',
-//   'amount'       => '99.00',
-//   'currency'     => 'CAD',
-//   'approved'     => true,
-//   'transaction_id' => 'abc123',
+//   'event'              => 'payment.captured',
+//   'merchant_site_id'   => 'hpm_xxxxx',
+//   'transaction_id'     => '8110000000033493479',
+//   'amount'             => 15,
+//   'currency'           => 'CAD',
+//   'status'             => 'CAPTURED',
+//   'card_type'          => null,
+//   'card_number_masked' => '4****0002',
+//   'reference'          => 'ORDER-123',
+//   'timestamp'          => '2026-06-25T16:07:50+00:00',
 // ]
 
 $reference = $event['reference'] ?? null;
-$approved  = $event['approved'] ?? false;
+$status    = $event['status'] ?? null;
 
-if ($approved) {
+if ($status === 'CAPTURED') {
     // TODO: mark the order as paid in your system using $reference
-    error_log("Payment approved for order: {$reference}");
+    error_log("Payment captured for order: {$reference}");
 } else {
     // TODO: handle declined/failed payment
-    error_log("Payment not approved for order: {$reference}");
+    error_log("Payment not captured for order: {$reference} (status: {$status})");
 }
 
 http_response_code(200);
