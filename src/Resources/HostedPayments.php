@@ -20,7 +20,7 @@ class HostedPayments
 
     /**
      * Enroll the customer in a recurring payment. Requires the Recurring Payments
-     * feature and an Elavon Converge location.
+     * feature on the merchant account.
      */
     public function createRecurringCheckoutUrl(array $payload): array
     {

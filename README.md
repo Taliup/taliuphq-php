@@ -91,7 +91,7 @@ $expiresAt   = $response['expires_at'];  // ISO 8601 expiry timestamp
 
 Enrolls a customer in a recurring payment, such as a monthly membership. Redirect the customer to `checkout_url`. Once they complete checkout, Taliup charges them on the schedule you set and sends `subscription.*` webhooks to your `webhook_url`.
 
-Requires the Recurring Payments feature on the merchant account and an Elavon Converge location.
+Requires the Recurring Payments feature on the merchant account.
 
 ```php
 $response = $client->hostedPayments()->createRecurringCheckoutUrl([
