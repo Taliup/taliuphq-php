@@ -87,6 +87,53 @@ $expiresAt   = $response['expires_at'];  // ISO 8601 expiry timestamp
 
 > **Note:** `redirect_url`, `cancel_url`, and `webhook_url` must use HTTPS.
 
+### Create a recurring checkout URL
+
+Enrolls a customer in a recurring payment, such as a monthly membership. Redirect the customer to `checkout_url`. Once they complete checkout, Taliup charges them on the schedule you set and sends `subscription.*` webhooks to your `webhook_url`.
+
+Requires the Recurring Payments feature on the merchant account and an Elavon Converge location.
+
+```php
+$response = $client->hostedPayments()->createRecurringCheckoutUrl([
+    // Required
+    'amount'    => 49.99,                 // charged every cycle
+    'email'     => 'jane@example.com',    // finds or creates the customer in Taliup HQ
+    'recurring' => [
+        'billing_cycle'      => 'MONTHLY',     // DAILY, WEEKLY, BIWEEKLY, MONTHLY or ANNUALLY
+        'first_payment_date' => '2026-10-22',  // optional, YYYY-MM-DD, defaults to today
+        'end_date'           => null,          // optional, YYYY-MM-DD, after first_payment_date
+        'has_free_trial'     => true,          // optional, needs a first_payment_date after today
+    ],
+
+    // Recommended
+    'reference'    => 'MEMBER-1042',          // your ID — returned in every webhook
+    'description'  => 'Monthly membership',   // line item name when no items are sent
+    'redirect_url' => 'https://yoursite.com/welcome',
+    'cancel_url'   => 'https://yoursite.com/join',
+    'webhook_url'  => 'https://yoursite.com/webhooks/taliup',
+
+    // Optional customer info
+    'first_name'   => 'Jane',
+    'last_name'    => 'Doe',
+    'phone'        => '+15145550100',
+
+    // Optional — line items. amount must equal price × quantity plus tax_total.
+    'items' => [
+        ['name' => 'Membership', 'quantity' => 1, 'price' => 43.48, 'tax_total' => 6.51],
+    ],
+]);
+
+$checkoutUrl  = $response['checkout_url'];   // Redirect customer here
+$subscription = $response['subscription'];   // id, status ('PENDING'), reference, amount, currency, billing_cycle, ...
+```
+
+How the first charge works:
+
+- **`first_payment_date` is today, or omitted:** the customer is charged at checkout. The next charge is one billing cycle later.
+- **`first_payment_date` is in the future:** the card is saved at checkout and nothing is charged. The first charge happens on `first_payment_date`.
+
+The agreement is billed in the merchant location's currency. Treat the webhook as the source of truth: the redirect to `redirect_url` is for the customer experience only, and its query parameters do not reflect a free trial.
+
 ---
 
 ## Webhooks
@@ -150,6 +197,69 @@ Or if you just want a boolean check without throwing:
 $isValid = Webhook::verify($payload, $signature, $secret); // bool
 ```
 
+### Subscription webhooks
+
+Agreements created with `createRecurringCheckoutUrl()` send these events to their `webhook_url`, signed the same way:
+
+| Event | Sent when |
+|---|---|
+| `subscription.activated` | The customer completed checkout and the schedule is active |
+| `subscription.payment_captured` | A renewal was charged |
+| `subscription.payment_declined` | A renewal was declined. The agreement becomes `PAST_DUE` |
+| `subscription.cancelled` | The merchant, the customer or Taliup cancelled the agreement |
+| `subscription.completed` | The agreement reached its `end_date` |
+
+Renewal results arrive once a day, after the merchant's processor settles. They are not real time.
+
+```json
+{
+    "event":            "subscription.activated",
+    "merchant_site_id": "your_merchant_site_id",
+    "reference":        "MEMBER-1042",
+    "subscription": {
+        "id":                 318,
+        "status":             "ACTIVE",
+        "amount":             49.99,
+        "currency":           "CAD",
+        "billing_cycle":      "MONTHLY",
+        "has_free_trial":     false,
+        "first_payment_date": "2026-10-08",
+        "next_payment_date":  "2026-11-08",
+        "end_date":           null,
+        "card_type":          "VISA",
+        "card_number_masked": "41**********1111",
+        "cancelled_by":       null
+    },
+    "transaction": {
+        "transaction_id":     "abc123",
+        "amount":             49.99,
+        "currency":           "CAD",
+        "status":             "CAPTURED",
+        "card_type":          "VISA",
+        "card_number_masked": "41**********1111"
+    },
+    "timestamp": "2026-10-08T15:42:10+00:00"
+}
+```
+
+`transaction` is `null` when nothing was charged: on `subscription.activated` for a free trial or future start, and on `subscription.cancelled` and `subscription.completed`. `cancelled_by` is `merchant`, `client` or `system` on `subscription.cancelled`.
+
+```php
+$event = Webhook::constructEvent($payload, $signature, $secret);
+
+switch ($event['event']) {
+    case 'subscription.activated':
+    case 'subscription.payment_captured':
+        // keep the membership for $event['reference'] active until $event['subscription']['next_payment_date']
+        break;
+    case 'subscription.payment_declined':
+    case 'subscription.cancelled':
+    case 'subscription.completed':
+        // follow up or end the membership for $event['reference']
+        break;
+}
+```
+
 ---
 
 ## Error Handling
@@ -197,6 +307,7 @@ export TALIUP_BASE_URL="https://taliuphq.com/api/v1"
 | Method | Description |
 |---|---|
 | `createCheckoutUrl(array $payload): array` | Create a hosted checkout session and return the URL |
+| `createRecurringCheckoutUrl(array $payload): array` | Create a recurring checkout session and return the URL and the pending subscription |
 
 ### `Webhook`
 

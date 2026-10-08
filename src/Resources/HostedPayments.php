@@ -18,6 +18,15 @@ class HostedPayments
         return $this->client->post('/hosted-payments/checkout-url', $payload);
     }
 
+    /**
+     * Enroll the customer in a recurring payment. Requires the Recurring Payments
+     * feature and an Elavon Converge location.
+     */
+    public function createRecurringCheckoutUrl(array $payload): array
+    {
+        return $this->client->post('/hosted-payments/recurring-checkout-url', $payload);
+    }
+
     public function verifyTransaction(array $payload): array
     {
         return $this->client->post('/hosted-payments/verify-transaction', $payload);
