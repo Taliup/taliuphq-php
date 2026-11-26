@@ -47,6 +47,11 @@ try {
         'last_name'    => 'User',
         'reference'    => 'MEMBER-1234',
         'description'  => 'Monthly membership',
+
+        // Makes the sign-up a membership in Taliup HQ (needs the Memberships feature).
+        // The plan is found by this code and the billing cycle, and created the first time.
+        // Remove this block for a plain billing schedule.
+        'membership'   => ['code' => 'monthly', 'name' => 'Monthly membership'],
         'redirect_url' => 'https://example.com/welcome',
         'cancel_url'   => 'https://example.com/membership',
         'webhook_url'  => $webhookUrl,
@@ -57,7 +62,10 @@ try {
             // the card is saved at checkout and nothing is charged until then.
             // 'first_payment_date' => '2026-11-01',
 
-            // Set with a future first_payment_date to offer a free trial until that date.
+            // A free trial: the card is saved at checkout and first charged in 14 days.
+            // 'trial_days' => 14,
+
+            // Or set has_free_trial with a future first_payment_date to end the trial on a set date.
             // 'has_free_trial' => true,
 
             // Omit to bill until the subscription is cancelled.

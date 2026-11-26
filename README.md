@@ -131,8 +131,44 @@ How the first charge works:
 
 - **`first_payment_date` is today, or omitted:** the customer is charged at checkout. The next charge is one billing cycle later.
 - **`first_payment_date` is in the future:** the card is saved at checkout and nothing is charged. The first charge happens on `first_payment_date`.
+- **`trial_days` is set:** a free trial. Taliup works out the first charge date as that many days from today, so you don't send `first_payment_date` or `has_free_trial`.
 
 The agreement is billed in the merchant location's currency. Treat the webhook as the source of truth: the redirect to `redirect_url` is for the customer experience only, and its query parameters do not reflect a free trial.
+
+### Memberships
+
+Add `membership` to the same call to sign the customer up to a membership in Taliup HQ, with the included services and discounts the business set for the plan. Requires the Memberships feature.
+
+```php
+$response = $client->hostedPayments()->createRecurringCheckoutUrl([
+    'amount'     => 15.99,
+    'email'      => 'jane@example.com',
+    'recurring'  => ['billing_cycle' => 'MONTHLY'],
+    'membership' => [
+        'code' => 'gold',            // your own name for the plan
+        'name' => 'Gold membership', // shown to the customer and in Taliup HQ
+    ],
+    'reference'    => 'MEMBER-1042',
+    'redirect_url' => 'https://yoursite.com/welcome',
+    'webhook_url'  => 'https://yoursite.com/webhooks/taliup',
+]);
+
+$membership = $response['membership'];   // id, code, name
+```
+
+How plans are matched:
+
+- You never copy an ID out of Taliup HQ. `code` is a name you choose and keep in your own site (letters, digits, dots, dashes and underscores, up to 64 characters).
+- Taliup finds the plan by `code` and `billing_cycle`. The first sign-up creates the plan; later sign-ups reuse it. One code can have a monthly and a yearly price.
+- A different `amount` for the same code and cycle updates the plan's price. Members who already signed up keep the price they joined at.
+- A plan deleted or switched off in Taliup HQ comes back on the next sign-up.
+- Name, price and cycle come from your site. What members get (included services, discounts) is set in Taliup HQ, under Memberships.
+
+Things to know:
+
+- A membership runs until it is cancelled, so leave out `end_date`. For a free trial, send `recurring.trial_days`: the member has their benefits from sign-up and is first charged that many days later.
+- A customer who already has this membership gets a `422`. A sign-up they started and never paid for is replaced by the new one.
+- Every `subscription.*` webhook carries the same `membership` object. It is `null` when the checkout was created without one.
 
 ---
 
@@ -216,6 +252,7 @@ Renewal results arrive once a day, after the merchant's processor settles. They 
     "event":            "subscription.activated",
     "merchant_site_id": "your_merchant_site_id",
     "reference":        "MEMBER-1042",
+    "membership":       { "id": 57, "code": "gold", "name": "Gold membership" },
     "subscription": {
         "id":                 318,
         "status":             "ACTIVE",
